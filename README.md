@@ -28,6 +28,73 @@
 - JWT - 身份认证
 - bcryptjs - 密码加密
 
+## 🗄️ 数据库说明
+
+本项目使用 **SQLite3** 作为数据库，无需额外安装数据库服务，开箱即用。
+
+### 数据库特性
+
+- **零配置** - 无需安装 PostgreSQL/MySQL，SQLite 是文件型数据库
+- **自动初始化** - 服务器首次启动时自动创建数据库文件和表结构
+- **种子数据** - 自动插入12款经典游戏数据
+- **数据持久化** - 数据保存在 `data.db` 文件中
+
+### 数据库结构
+
+项目包含3个核心数据表：
+
+**users（用户表）**
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | TEXT (PK) | 用户唯一标识（UUID） |
+| email | TEXT (UNIQUE) | 用户邮箱 |
+| username | TEXT | 用户名 |
+| password_hash | TEXT | 加密后的密码 |
+| avatar | TEXT | 头像URL（可选） |
+| role | TEXT | 角色：user/admin |
+| created_at | DATETIME | 创建时间 |
+| updated_at | DATETIME | 更新时间 |
+
+**games（游戏表）**
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | TEXT (PK) | 游戏唯一标识（UUID） |
+| title | TEXT | 游戏名称 |
+| description | TEXT | 游戏描述 |
+| genre | TEXT | 游戏类型 |
+| year | INTEGER | 发行年份 |
+| developer | TEXT | 开发商 |
+| publisher | TEXT | 发行商 |
+| cover_image | TEXT | 封面图片URL |
+| created_at | DATETIME | 创建时间 |
+
+**scores（成绩表）**
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | TEXT (PK) | 成绩唯一标识（UUID） |
+| user_id | TEXT (FK) | 用户ID |
+| game_id | TEXT (FK) | 游戏ID |
+| score | INTEGER | 得分 |
+| level | INTEGER | 等级 |
+| created_at | DATETIME | 创建时间 |
+
+### 数据库文件
+
+- 数据库文件：`data.db`（项目根目录）
+- 数据库初始化代码：`api/database.ts`
+- `.gitignore` 已配置排除 `data.db`，不会提交到 Git
+
+### 迁移到 PostgreSQL（可选）
+
+如需在生产环境使用 PostgreSQL，需要：
+
+1. 安装 PostgreSQL 驱动：`npm install pg`
+2. 修改 `api/database.ts`，将 SQLite 连接改为 PostgreSQL
+3. 更新表结构中的类型映射（TEXT → VARCHAR，INTEGER → INT 等）
+4. 设置环境变量 `DATABASE_URL=postgresql://user:pass@host:5432/dbname`
+
+---
+
 ## 📁 项目结构
 
 ```
@@ -150,6 +217,8 @@ npm run start
 
 服务器将运行在 http://localhost:3001（包含前端静态文件）。
 
+**注意**：SQLite 数据库文件 `data.db` 会在首次启动时自动创建。确保运行进程对项目目录有写入权限。数据会持久化保存在 `data.db` 文件中，重启服务不会丢失。
+
 ---
 
 ### 方案二：Docker 部署
@@ -171,6 +240,8 @@ docker run -d \
 ```
 
 访问 http://localhost:3000
+
+**注意**：通过 `-v` 参数将数据目录挂载到宿主机，确保数据库文件 `data.db` 不会因容器删除而丢失。
 
 ---
 
@@ -246,6 +317,10 @@ pm2 status
 pm2 startup
 pm2 save
 ```
+
+**注意**：确保 `/path/to/game` 目录有写入权限，以便 SQLite 创建和更新 `data.db` 数据库文件。
+
+---
 
 #### 5. 配置 Nginx 反向代理
 
